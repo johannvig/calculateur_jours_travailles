@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculateur de Jours Travaillés</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; max-width: 600px; margin-bottom: 1em; }
+    th, td { border: 1px solid #ccc; padding: 0.5em; text-align: center; }
+    th { background: #f0f0f0; }
+    input[type="date"] { width: 100%; }
+    button { margin: 0.5em 0.2em; padding: 0.5em 1em; border: none; background: #007bff; color: #fff; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #holidays { width: 100%; max-width: 600px; height: 80px; }
+    #result { font-size: 1.2em; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <h1>Calculateur de Jours Travaillés</h1>
+  <p>Ajoute autant de périodes que nécessaire, puis saisis les jours fériés (format YYYY-MM-DD, séparés par des virgules).</p>
+  <table id="periods">
+    <thead>
+      <tr><th>Date début</th><th>Date fin</th><th>Supprimer</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="date" /></td>
+        <td><input type="date" /></td>
+        <td><button class="remove">–</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <button id="addRow">Ajouter une période</button>
+  <h3>Jours fériés</h3>
+  <textarea id="holidays" placeholder="2023-01-01,2023-05-01,2024-12-25"></textarea>
+  <br />
+  <button id="calculate">Calculer</button>
+  <div id="result"></div>
+
+  <script>
+    // Ajouter / supprimer des lignes
+    const table = document.getElementById('periods').getElementsByTagName('tbody')[0];
+    document.getElementById('addRow').addEventListener('click', () => {
+      const row = document.createElement('tr');
+      row.innerHTML = '<td><input type="date"/></td><td><input type="date"/></td><td><button class="remove">–</button></td>';
+      table.appendChild(row);
+    });
+    table.addEventListener('click', e => {
+      if(e.target && e.target.classList.contains('remove')) {
+        const rows = table.querySelectorAll('tr');
+        if(rows.length > 1) e.target.closest('tr').remove();
+      }
+    });
+
+    // Calculer jours ouvrés
+    document.getElementById('calculate').addEventListener('click', () => {
+      const holidayInput = document.getElementById('holidays').value.trim();
+      const holidays = new Set(
+        holidayInput === '' ? [] : holidayInput.split(',').map(d => new Date(d).toDateString())
+      );
+      let total = 0;
+      table.querySelectorAll('tr').forEach(row => {
+        const start = row.cells[0].querySelector('input').value;
+        const end = row.cells[1].querySelector('input').value;
+        if(start && end) {
+          let d = new Date(start);
+          const last = new Date(end);
+          while(d <= last) {
+            const day = d.getDay();
+            const ds = d.toDateString();
+            if(day !== 0 && day !== 6 && !holidays.has(ds)) total++;
+            d.setDate(d.getDate() + 1);
+          }
+        }
+      });
+      document.getElementById('result').textContent = 'Total jours travaillés : ' + total;
+    });
+  </script>
+</body>
+</html>
